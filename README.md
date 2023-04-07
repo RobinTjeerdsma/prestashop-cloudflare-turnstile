@@ -45,22 +45,44 @@ For the registration form, the widget is automatically added with a hook. For "c
 
 **Never select a form to validate without the widget in the form template.**
 
-### Widget
+## Widget
 
-```html
-{widget name='pixel_cloudflare_turnstile'}
+For contact, login and reset password forms, you need to manually add the widget in the template files.
+
+### Contact
+
+**Template**:
+
+themes/{themeName}/modules/contactform/views/templates/widget/contactform.tpl
+
+**Widget**:
+
+```smarty
+{widget name='pixel_cloudflare_turnstile' form='contact'}
 ```
 
-Override the default configured theme by adding a theme option (auto, light or dark):
+### Login
 
-```html
-{widget name='pixel_cloudflare_turnstile' theme='dark'}
+**Template**:
+
+themes/{themeName}/templates/customer/_partials/login-form.tpl
+
+**Widget**:
+
+```smarty
+{widget name='pixel_cloudflare_turnstile' form='login'}
 ```
 
-Override the default action name by adding an action option:
+### Reset password
 
-```html
-{widget name='pixel_cloudflare_turnstile' action='my-form'}
+**Template**:
+
+themes/{themeName}/templates/customer/password-email.tpl
+
+**Widget**:
+
+```smarty
+{widget name='pixel_cloudflare_turnstile' form='password'}
 ```
 
 ### Forms
