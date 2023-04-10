@@ -51,6 +51,8 @@ class Pixel_cloudflare_turnstile extends Module implements WidgetInterface
     public const FORM_REGISTER = 'register';
     public const FORM_PASSWORD = 'password';
     public const FORM_NEWSLETTER = 'newsletter';
+    public const FORM_CHECKOUT_LOGIN = 'checkout-login';
+    public const FORM_CHECKOUT_REGISTER = 'checkout-register';
 
     protected $templateFile;
 
@@ -274,21 +276,21 @@ class Pixel_cloudflare_turnstile extends Module implements WidgetInterface
 
         // Register or login in checkout
         if ($controllerClass === 'OrderController' &&
-            ($this->isAvailable(self::FORM_REGISTER) || $this->isAvailable(self::FORM_LOGIN))
+            ($this->isAvailable(self::FORM_CHECKOUT_REGISTER) || $this->isAvailable(self::FORM_CHECKOUT_LOGIN))
         ) {
-            if ($this->isAvailable(self::FORM_REGISTER) && $this->isAvailable(self::FORM_LOGIN)) {
+            if ($this->isAvailable(self::FORM_CHECKOUT_REGISTER) && $this->isAvailable(self::FORM_CHECKOUT_LOGIN)) {
                 if ($validate && !(Tools::isSubmit('submitCreate') || Tools::isSubmit('submitLogin'))) {
                     return false;
                 }
                 return true;
             }
-            if ($this->isAvailable(self::FORM_REGISTER)) {
+            if ($this->isAvailable(self::FORM_CHECKOUT_REGISTER)) {
                 if ($validate && !Tools::isSubmit('submitCreate')) {
                     return false;
                 }
                 return true;
             }
-            if ($this->isAvailable(self::FORM_LOGIN)) {
+            if ($this->isAvailable(self::FORM_CHECKOUT_LOGIN)) {
                 if ($validate && !Tools::isSubmit('submitLogin')) {
                     return false;
                 }
@@ -486,6 +488,10 @@ class Pixel_cloudflare_turnstile extends Module implements WidgetInterface
     {
         $isCustom = (int)($configuration['custom'] ?? 0) === 1;
         $form = $configuration['form'] ?? null;
+        if ($form !== null && get_class($this->context->controller) === 'OrderController') {
+            $form = 'checkout-' . $form;
+            $configuration['form'] = $form;
+        }
         if (!$isCustom) {
             if ($form === null) {
                 return 'Turnstile widget error: the form parameter is missing';
@@ -668,6 +674,14 @@ class Pixel_cloudflare_turnstile extends Module implements WidgetInterface
                         [
                             'value' => self::FORM_NEWSLETTER,
                             'name'  => $this->trans('Newsletter', [], 'Modules.Pixelcloudflareturnstile.Admin'),
+                        ],
+                        [
+                            'value' => self::FORM_CHECKOUT_LOGIN,
+                            'name'  => $this->trans('Checkout Login', [], 'Modules.Pixelcloudflareturnstile.Admin'),
+                        ],
+                        [
+                            'value' => self::FORM_CHECKOUT_REGISTER,
+                            'name'  => $this->trans('Checkout Register', [], 'Modules.Pixelcloudflareturnstile.Admin'),
                         ],
                     ],
                     'id'   => 'value',
