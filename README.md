@@ -13,10 +13,13 @@
 - Register
 - Reset password
 - Newsletter subscription
-- Login and register during checkout
+- Checkout login
+- Checkout register
 - Custom or third-party forms
 
 ![Cloudflare Turnstile](screenshot.png)
+
+**Note:** Activating a Captcha in the checkout can alter the user experience. A "stupid" bot will rarely reach this stage (cart requirement). To be activated only if necessary.
 
 ## Requirements
 
