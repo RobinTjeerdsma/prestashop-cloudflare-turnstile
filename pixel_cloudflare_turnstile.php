@@ -487,13 +487,13 @@ class Pixel_cloudflare_turnstile extends Module implements WidgetInterface
     public function renderWidget($hookName, array $configuration): string
     {
         $isCustom = (int)($configuration['custom'] ?? 0) === 1;
-        $form = $configuration['form'] ?? null;
-        if ($form !== null && get_class($this->context->controller) === 'OrderController') {
+        $form = $configuration['form'] ?? $this->getFormName();
+        if ($form !== '' && get_class($this->context->controller) === 'OrderController') {
             $form = 'checkout-' . $form;
-            $configuration['form'] = $form;
         }
+        $configuration['form'] = $form;
         if (!$isCustom) {
-            if ($form === null) {
+            if ($form === '') {
                 return 'Turnstile widget error: the form parameter is missing';
             }
             if (!$this->isAvailable($form)) {
@@ -526,6 +526,34 @@ class Pixel_cloudflare_turnstile extends Module implements WidgetInterface
             'appearance' => $configuration['appearance'] ?? $this->getAppearance(),
             'action'     => substr($action, 0, 32), // This can only contain up to 32 alphanumeric characters including _ and -
         ];
+    }
+
+    /**
+     * Guess the form name from the current controller
+     *
+     * Templates written for 1.1.x call the widget without a form parameter,
+     * so keep them working instead of printing the missing parameter error.
+     *
+     * @return string
+     */
+    public function getFormName(): string
+    {
+        switch (get_class($this->context->controller)) {
+            case 'ContactController':
+                return self::FORM_CONTACT;
+            case 'PasswordController':
+                return self::FORM_PASSWORD;
+            case 'RegistrationController':
+                return self::FORM_REGISTER;
+            case 'AuthController':
+                return Tools::getValue('create_account') ? self::FORM_REGISTER : self::FORM_LOGIN;
+            case 'OrderController':
+                // the theme reuses the login partial in checkout, the register
+                // widget always comes from the hook with its form set
+                return self::FORM_LOGIN;
+        }
+
+        return '';
     }
 
     /**
