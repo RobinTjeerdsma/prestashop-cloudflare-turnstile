@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.2
+
+- Ajax submissions (e.g. a one-page checkout saving the guest form on blur) no longer get a redirect they silently swallow: the submit is dropped and the error comes back in the controller's own response
+- Draw widgets that a script inserts after page load (re-rendered checkout steps), so they get a token
+
 ## 1.2.1
 
 - Turnstile in checkout for login and register/guest (from the unreleased 1.2.0 branch)

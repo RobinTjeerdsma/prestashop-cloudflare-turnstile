@@ -64,7 +64,7 @@ class Pixel_cloudflare_turnstile extends Module implements WidgetInterface
     public function __construct()
     {
         $this->name = 'pixel_cloudflare_turnstile';
-        $this->version = '1.2.1';
+        $this->version = '1.2.2';
         $this->author = 'Pixel Open';
         $this->tab = 'front_office_features';
         $this->need_instance = 0;
@@ -158,6 +158,14 @@ class Pixel_cloudflare_turnstile extends Module implements WidgetInterface
                 'attributes' => 'async',
             ]
         );
+        $this->context->controller->registerJavascript(
+            'cloudflare-turnstile-rerender',
+            'modules/' . $this->name . '/views/js/turnstile.js',
+            [
+                'position'   => 'bottom',
+                'priority'   => 100,
+            ]
+        );
     }
 
     /**
@@ -219,8 +227,51 @@ class Pixel_cloudflare_turnstile extends Module implements WidgetInterface
         }
 
         if ($this->canProcess(get_class($params['controller']), true)) {
-            $this->turnstileValidationAndRedirect();
+            if ($this->isAjaxRequest()) {
+                $this->turnstileValidationForAjax($params['controller']);
+            } else {
+                $this->turnstileValidationAndRedirect();
+            }
         }
+    }
+
+    /**
+     * Whether the current request was sent by a script rather than a page load
+     *
+     * @return bool
+     */
+    protected function isAjaxRequest(): bool
+    {
+        return Tools::getIsset('ajax')
+            || strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'xmlhttprequest';
+    }
+
+    /**
+     * Validate turnstile for an ajax submission
+     *
+     * A redirect is swallowed by the script that sent the request, so the visitor
+     * would never see why nothing happened (e.g. a one-page checkout saving the
+     * guest form on blur). Instead, drop the submit flags so the controller runs
+     * as a plain refresh, and hand it the error to return with its own response.
+     *
+     * @param Controller $controller
+     *
+     * @return void
+     * @throws Exception
+     */
+    protected function turnstileValidationForAjax(Controller $controller): void
+    {
+        if (self::turnstileValidation()) {
+            return;
+        }
+
+        foreach (['submitCreate', 'submitLogin', 'submitMessage'] as $submit) {
+            unset($_POST[$submit], $_GET[$submit]);
+        }
+
+        $controller->errors[] = !empty(static::$validationError)
+            ? static::$validationError
+            : $this->trans('Security validation error', [], 'Modules.Pixelcloudflareturnstile.Shop');
     }
 
     /**
