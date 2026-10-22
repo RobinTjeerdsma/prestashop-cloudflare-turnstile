@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.1
+
+- Turnstile in checkout for login and register/guest (from the unreleased 1.2.0 branch)
+- Keep 1.1.x templates working when the widget has no form parameter
+- Match controllers with is_a(), so one-page checkout modules extending OrderController are protected too
+- Reset password: only validate a real submission (upstream PR #17)
+- Add Dutch shop translations
+
 ## 1.1.7
 
 - Fix module config redirect URL for Nginx compatibility

@@ -64,7 +64,7 @@ class Pixel_cloudflare_turnstile extends Module implements WidgetInterface
     public function __construct()
     {
         $this->name = 'pixel_cloudflare_turnstile';
-        $this->version = '1.2.0';
+        $this->version = '1.2.1';
         $this->author = 'Pixel Open';
         $this->tab = 'front_office_features';
         $this->need_instance = 0;
@@ -265,6 +265,9 @@ class Pixel_cloudflare_turnstile extends Module implements WidgetInterface
     /**
      * Check if turnstile is available for current action
      *
+     * Controllers match with is_a() so subclasses count too, e.g. a one-page
+     * checkout module whose front controller extends OrderController.
+     *
      * @param string $controllerClass
      * @param bool   $validate
      *
@@ -275,7 +278,7 @@ class Pixel_cloudflare_turnstile extends Module implements WidgetInterface
         $isLoggedIn = $this->context->customer->isLogged();
 
         // Register or login in checkout
-        if ($controllerClass === 'OrderController' &&
+        if (is_a($controllerClass, 'OrderController', true) &&
             ($this->isAvailable(self::FORM_CHECKOUT_REGISTER) || $this->isAvailable(self::FORM_CHECKOUT_LOGIN))
         ) {
             if ($this->isAvailable(self::FORM_CHECKOUT_REGISTER) && $this->isAvailable(self::FORM_CHECKOUT_LOGIN)) {
@@ -299,7 +302,7 @@ class Pixel_cloudflare_turnstile extends Module implements WidgetInterface
         }
 
         // Contact
-        if ($controllerClass === 'ContactController' && $this->isAvailable(self::FORM_CONTACT)) {
+        if (is_a($controllerClass, 'ContactController', true) && $this->isAvailable(self::FORM_CONTACT)) {
             if ($validate && !Tools::isSubmit('submitMessage')) {
                 return false;
             }
@@ -307,7 +310,7 @@ class Pixel_cloudflare_turnstile extends Module implements WidgetInterface
         }
 
         // Register
-        if ($controllerClass === 'AuthController' &&
+        if (is_a($controllerClass, 'AuthController', true) &&
             $this->isAvailable(self::FORM_REGISTER) &&
             Tools::getValue('create_account') &&
             !$isLoggedIn
@@ -319,7 +322,7 @@ class Pixel_cloudflare_turnstile extends Module implements WidgetInterface
         }
 
         // Register Prestashop >= 8.0.0
-        if ($controllerClass === 'RegistrationController' &&
+        if (is_a($controllerClass, 'RegistrationController', true) &&
             $this->isAvailable(self::FORM_REGISTER) &&
             !$isLoggedIn
         ) {
@@ -330,7 +333,7 @@ class Pixel_cloudflare_turnstile extends Module implements WidgetInterface
         }
 
         // Login
-        if ($controllerClass === 'AuthController' &&
+        if (is_a($controllerClass, 'AuthController', true) &&
             $this->isAvailable(self::FORM_LOGIN) &&
             !Tools::getValue('create_account') &&
             !$isLoggedIn
@@ -342,7 +345,7 @@ class Pixel_cloudflare_turnstile extends Module implements WidgetInterface
         }
 
         // Reset Password
-        if ($controllerClass === 'PasswordController' && $this->isAvailable(self::FORM_PASSWORD)) {
+        if (is_a($controllerClass, 'PasswordController', true) && $this->isAvailable(self::FORM_PASSWORD)) {
             if ($validate && !Tools::isSubmit('email')) {
                 return false;
             }
@@ -488,7 +491,7 @@ class Pixel_cloudflare_turnstile extends Module implements WidgetInterface
     {
         $isCustom = (int)($configuration['custom'] ?? 0) === 1;
         $form = $configuration['form'] ?? $this->getFormName();
-        if ($form !== '' && get_class($this->context->controller) === 'OrderController') {
+        if ($form !== '' && $this->context->controller instanceof OrderController) {
             $form = 'checkout-' . $form;
         }
         $configuration['form'] = $form;
@@ -538,6 +541,13 @@ class Pixel_cloudflare_turnstile extends Module implements WidgetInterface
      */
     public function getFormName(): string
     {
+        // instanceof so one-page checkout modules extending the core order controller
+        // count too; the theme reuses the login partial in checkout, the register
+        // widget always comes from the hook with its form set
+        if ($this->context->controller instanceof OrderController) {
+            return self::FORM_LOGIN;
+        }
+
         switch (get_class($this->context->controller)) {
             case 'ContactController':
                 return self::FORM_CONTACT;
@@ -547,10 +557,6 @@ class Pixel_cloudflare_turnstile extends Module implements WidgetInterface
                 return self::FORM_REGISTER;
             case 'AuthController':
                 return Tools::getValue('create_account') ? self::FORM_REGISTER : self::FORM_LOGIN;
-            case 'OrderController':
-                // the theme reuses the login partial in checkout, the register
-                // widget always comes from the hook with its form set
-                return self::FORM_LOGIN;
         }
 
         return '';
